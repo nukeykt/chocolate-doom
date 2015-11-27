@@ -138,7 +138,6 @@ void S_Init(int sfxVolume, int musicVolume, int voiceVolume)
 {  
     int i;
 
-    I_SetOPLDriverVer(opl_doom_1_9);
     I_PrecacheSounds(S_sfx, NUMSFX);
 
     S_SetSfxVolume(sfxVolume);
@@ -823,4 +822,10 @@ void S_StopMusic(void)
         mus_playing = NULL;
     }
 }
+
+opl_driver_ver_t I_GetOPLDriverVer(void)
+{
+    return opl_doom_1_9;
+}
+
 
