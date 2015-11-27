@@ -1145,7 +1145,7 @@ void chip_write(opl_chip *chip, Bit16u reg, Bit8u v) {
 }
 
 
-void chip_update(opl_chip *chip, Bit16s* sndptr, int numsamples) {
+void chip_update(opl_chip *chip, Bit16s* sndptr, Bit32u numsamples) {
     Bit16s out[2];
     float outb[128][2];
     SRC_DATA rsm_data;
@@ -1159,15 +1159,15 @@ void chip_update(opl_chip *chip, Bit16s* sndptr, int numsamples) {
         {
             for (i = 0; i < 128; i++) {
                 chip_generate(chip, out);
-                chip->rsm_buff[i][0] = out[0] / 32768.0;
-                chip->rsm_buff[i][1] = out[1] / 32768.0;
+                chip->rsm_buff[i][0] = (float)(out[0] / 32768.0);
+                chip->rsm_buff[i][1] = (float)(out[1] / 32768.0);
             }
             chip->rsm_status = 1;
             chip->rsm_counter = 0;
         }
         rsm_data.data_in = chip->rsm_buff[chip->rsm_counter];
         rsm_data.input_frames = 128 - chip->rsm_counter;
-        rsm_data.data_out = outb;
+        rsm_data.data_out = outb[0];
         t = numsamples - generated;
         if (t > 128)
         {
@@ -1176,13 +1176,13 @@ void chip_update(opl_chip *chip, Bit16s* sndptr, int numsamples) {
         rsm_data.output_frames = t;
         rsm_data.end_of_input = 0;
         src_process(chip->rsm_state, &rsm_data);
-        for (i = 0; i < rsm_data.output_frames_gen; i++)
+        for (i = 0; i < (Bit32u)rsm_data.output_frames_gen; i++)
         {
-            *sndptr++ = limshort((Bit32s)(32768.0 * 0.75 *outb[i][0]));
-            *sndptr++ = limshort((Bit32s)(32768.0 * 0.75 *outb[i][1]));
+            *sndptr++ = limshort((Bit32s)(32768.0 * 2.0 *outb[i][0]));
+            *sndptr++ = limshort((Bit32s)(32768.0 * 2.0 *outb[i][1]));
         }
         generated += rsm_data.output_frames_gen;
-        chip->rsm_counter += rsm_data.input_frames_used;
+        chip->rsm_counter += (Bit16u)rsm_data.input_frames_used;
         if (chip->rsm_counter >= 128)
         {
             chip->rsm_status = 0;
