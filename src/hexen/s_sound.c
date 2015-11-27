@@ -787,7 +787,6 @@ void S_UpdateSounds(mobj_t * listener)
 
 void S_Init(void)
 {
-    I_SetOPLDriverVer(opl_doom2_1_666);
     SoundCurve = W_CacheLumpName("SNDCURVE", PU_STATIC);
 //      SoundCurve = Z_Malloc(MAX_SND_DIST, PU_STATIC, NULL);
 
@@ -1009,4 +1008,10 @@ void S_InitScript(void)
         }
     }
 }
+
+opl_driver_ver_t I_GetOPLDriverVer(void)
+{
+    return opl_doom2_1_666;
+}
+
 
