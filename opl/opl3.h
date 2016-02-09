@@ -21,7 +21,7 @@
 //      OPLx decapsulated(Matthew Gambrell, Olli Niemitalo):
 //          OPL2 ROMs.
 //
-// version: 1.6.1
+// version: 1.6.2
 //
 
 #include <inttypes.h>
@@ -42,66 +42,65 @@ typedef struct _opl_channel opl_channel;
 typedef struct _opl_chip opl_chip;
 
 struct _opl_slot {
-	opl_channel *channel;
-	opl_chip *chip;
-	Bit16s out;
-	Bit16s fbmod;
-	Bit16s *mod;
-	Bit16s prout;
-	Bit16s eg_rout;
-	Bit16s eg_out;
-	Bit8u eg_inc;
-	Bit8u eg_gen;
-	Bit8u eg_rate;
-	Bit8u eg_ksl;
-	Bit8u *trem;
-	Bit8u reg_vib;
-	Bit8u reg_type;
-	Bit8u reg_ksr;
-	Bit8u reg_mult;
-	Bit8u reg_ksl;
-	Bit8u reg_tl;
-	Bit8u reg_ar;
-	Bit8u reg_dr;
-	Bit8u reg_sl;
-	Bit8u reg_rr;
-	Bit8u reg_wf;
-	Bit8u key;
-	Bit32u pg_phase;
-	Bit32u timer;
+    opl_channel *channel;
+    opl_chip *chip;
+    Bit16s out;
+    Bit16s fbmod;
+    Bit16s *mod;
+    Bit16s prout;
+    Bit16s eg_rout;
+    Bit16s eg_out;
+    Bit8u eg_inc;
+    Bit8u eg_gen;
+    Bit8u eg_rate;
+    Bit8u eg_ksl;
+    Bit8u *trem;
+    Bit8u reg_vib;
+    Bit8u reg_type;
+    Bit8u reg_ksr;
+    Bit8u reg_mult;
+    Bit8u reg_ksl;
+    Bit8u reg_tl;
+    Bit8u reg_ar;
+    Bit8u reg_dr;
+    Bit8u reg_sl;
+    Bit8u reg_rr;
+    Bit8u reg_wf;
+    Bit8u key;
+    Bit32u pg_phase;
+    Bit32u timer;
 };
 
 struct _opl_channel {
-	opl_slot *slots[2];
-	opl_channel *pair;
-	opl_chip *chip;
-	Bit16s *out[4];
-	Bit8u chtype;
-	Bit16u f_num;
-	Bit8u block;
-	Bit8u fb;
-	Bit8u con;
-	Bit8u alg;
-	Bit8u ksv;
-	Bit16u cha, chb;
-	float fcha, fchb;
+    opl_slot *slots[2];
+    opl_channel *pair;
+    opl_chip *chip;
+    Bit16s *out[4];
+    Bit8u chtype;
+    Bit16u f_num;
+    Bit8u block;
+    Bit8u fb;
+    Bit8u con;
+    Bit8u alg;
+    Bit8u ksv;
+    Bit16u cha, chb;
 };
 
 struct _opl_chip {
-	opl_channel channel[18];
-	opl_slot slot[36];
-	Bit16u timer;
-	Bit8u newm;
-	Bit8u nts;
-	Bit8u rhy;
-	Bit8u vibpos;
+    opl_channel channel[18];
+    opl_slot slot[36];
+    Bit16u timer;
+    Bit8u newm;
+    Bit8u nts;
+    Bit8u rhy;
+    Bit8u vibpos;
     Bit8u vibshift;
-	Bit8u tremolo;
+    Bit8u tremolo;
     Bit8u tremolopos;
     Bit8u tremoloshift;
-	Bit32u noise;
-	Bit16s zeromod;
-	Bit32s mixbuff[2];
+    Bit32u noise;
+    Bit16s zeromod;
+    Bit32s mixbuff[2];
     float rsm_buff[128][2];
     Bit16u rsm_counter;
     Bit32u rsm_status;
