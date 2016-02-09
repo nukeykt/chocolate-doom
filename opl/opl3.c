@@ -51,7 +51,7 @@
 //  v1.6.1:
 //      Simple YMF289(OPL3-L) emulation.
 //  v1.6.2:
-//      Version for Chocolate Doom?
+//      Version for Chocolate Doom.
 //
 
 #include <stdio.h>
@@ -1054,8 +1054,6 @@ void chip_reset(opl_chip *chip, Bit32u samplerate) {
         chip->channel[channum].chtype = ch_2op;
         chip->channel[channum].cha = ~0;
         chip->channel[channum].chb = ~0;
-        chip->channel[channum].fcha = 1.0;
-        chip->channel[channum].fchb = 1.0;
         chan_setupalg(&chip->channel[channum]);
     }
     chip->noise = 0x306600;
