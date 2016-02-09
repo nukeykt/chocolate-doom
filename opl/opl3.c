@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2013-2015 Alexey Khokholov (Nuke.YKT)
+// Copyright (C) 2013-2016 Alexey Khokholov (Nuke.YKT)
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -21,7 +21,7 @@
 //      OPLx decapsulated(Matthew Gambrell, Olli Niemitalo):
 //          OPL2 ROMs.
 //
-// version: 1.6.1
+// version: 1.6.2
 //
 //  Changelog:
 //
@@ -50,6 +50,8 @@
 //      Improved emulation output.
 //  v1.6.1:
 //      Simple YMF289(OPL3-L) emulation.
+//  v1.6.2:
+//      Version for Chocolate Doom?
 //
 
 #include <stdio.h>
@@ -137,13 +139,6 @@ static const Bit8u mt[16] = { 1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 20, 24, 24,
 static const Bit8u kslrom[16] = { 0, 32, 40, 45, 48, 51, 53, 55, 56, 58, 59, 60, 61, 62, 63, 64 };
 
 static const Bit8u kslshift[4] = { 8, 1, 2, 0 };
-
-//
-// LFO vibrato
-//
-
-static const Bit8u vib_table[8] = { 3, 1, 0, 1, 3, 1, 0, 1 };
-static const Bit8s vibsgn_table[8] = { 1, 1, 1, 1, -1, -1, -1, -1 };
 
 //
 // envelope generator constants
@@ -453,14 +448,32 @@ void eg_keyoff(opl_slot *slot, Bit8u type) {
 //
 
 void pg_generate(opl_slot *slot) {
-    Bit8u f_num_high;
-    Bit16u f_num = slot->channel->f_num;
+    Bit16u f_num;
+    Bit32u basefreq;
 
+    f_num = slot->channel->f_num;
     if (slot->reg_vib) {
-        f_num_high = f_num >> (7 + vib_table[(slot->chip->timer >> 10) & 0x07] + (0x01 - slot->chip->dvb));
-        f_num += f_num_high * vibsgn_table[(slot->chip->timer >> 10) & 0x07];
+        Bit8s range;
+        Bit8u vibpos;
+
+        range = (f_num >> 7) & 7;
+        vibpos = slot->chip->vibpos;
+
+        if (!(vibpos & 3)) {
+            range = 0;
+        }
+        else if (vibpos & 1) {
+            range >>= 1;
+        }
+        range >>= slot->chip->vibshift;
+
+        if (vibpos & 4) {
+            range = -range;
+        }
+        f_num += range;
     }
-    slot->pg_phase += (((f_num << slot->channel->block) >> 1) * mt[slot->reg_mult]) >> 1;
+    basefreq = (f_num << slot->channel->block) >> 1;
+    slot->pg_phase += (basefreq * mt[slot->reg_mult]) >> 1;
 }
 
 //
@@ -480,7 +493,7 @@ void n_generate(opl_chip *chip) {
 
 void slot_write20(opl_slot *slot, Bit8u data) {
     if ((data >> 7) & 0x01) {
-        slot->trem = &slot->chip->tremval;
+        slot->trem = &slot->chip->tremolo;
     }
     else {
         slot->trem = (Bit8u*)&slot->chip->zeromod;
@@ -980,34 +993,24 @@ void chip_generate(opl_chip *chip, Bit16s *buff) {
     n_generate(chip);
 
     if ((chip->timer & 0x3f) == 0x3f) {
-        if (!chip->tremdir) {
-            if (chip->tremtval == 105) {
-                chip->tremtval--;
-                chip->tremdir = 1;
-            }
-            else {
-                chip->tremtval++;
-            }
+        chip->tremolopos = (chip->tremolopos + 1) % 210;
+        if (chip->tremolopos < 105) {
+            chip->tremolo = chip->tremolopos >> (2 + chip->tremoloshift);
         }
         else {
-            if (chip->tremtval == 0) {
-                chip->tremtval++;
-                chip->tremdir = 0;
-            }
-            else {
-                chip->tremtval--;
-            }
+            chip->tremolo = (210 - chip->tremolopos) >> (2 + chip->tremoloshift);
         }
-        chip->tremval = (chip->tremtval >> 2) >> ((1 - chip->dam) << 1);
+    }
+
+    if ((chip->timer & 0x3ff) == 0x3ff) {
+        chip->vibpos = (chip->vibpos + 1) & 7;
     }
 
     chip->timer++;
 }
 
-void chip_generate_opl3l(opl_chip *chip, Bit16s *buffer)
-{
-    while (chip->samplecnt / 57)
-    {
+void chip_generate_opl3l(opl_chip *chip, Bit16s *buffer) {
+    while (chip->samplecnt / 57) {
         chip->oldsamples[0] = chip->samples[0];
         chip->oldsamples[1] = chip->samples[1];
         chip_generate(chip, chip->samples);
@@ -1122,8 +1125,8 @@ void chip_write(opl_chip *chip, Bit16u reg, Bit8u v) {
         break;
     case 0xb0:
         if (regm == 0xbd && !high) {
-            chip->dam = v >> 7;
-            chip->dvb = (v >> 6) & 0x01;
+            chip->tremoloshift = ((v >> 7) ^ 1) << 1;
+            chip->vibshift = ((v >> 6) & 0x01) ^ 1;
             chan_updaterhythm(chip, v);
         }
         else if ((regm & 0x0f) < 9) {
@@ -1178,8 +1181,8 @@ void chip_update(opl_chip *chip, Bit16s* sndptr, Bit32u numsamples) {
         src_process(chip->rsm_state, &rsm_data);
         for (i = 0; i < (Bit32u)rsm_data.output_frames_gen; i++)
         {
-            *sndptr++ = limshort((Bit32s)(32768.0 * 2.0 *outb[i][0]));
-            *sndptr++ = limshort((Bit32s)(32768.0 * 2.0 *outb[i][1]));
+            *sndptr++ = limshort((Bit32s)(32768.0 * 1.0 *outb[i][0]));
+            *sndptr++ = limshort((Bit32s)(32768.0 * 1.0 *outb[i][1]));
         }
         generated += rsm_data.output_frames_gen;
         chip->rsm_counter += (Bit16u)rsm_data.input_frames_used;

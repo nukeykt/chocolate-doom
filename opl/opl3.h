@@ -93,13 +93,12 @@ struct _opl_chip {
 	Bit16u timer;
 	Bit8u newm;
 	Bit8u nts;
-	Bit8u dvb;
-	Bit8u dam;
 	Bit8u rhy;
 	Bit8u vibpos;
-	Bit8u tremval;
-	Bit8u tremtval;
-	Bit8u tremdir;
+    Bit8u vibshift;
+	Bit8u tremolo;
+    Bit8u tremolopos;
+    Bit8u tremoloshift;
 	Bit32u noise;
 	Bit16s zeromod;
 	Bit32s mixbuff[2];
